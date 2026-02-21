@@ -1,128 +1,139 @@
---// SERVICES
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local player = Players.LocalPlayer
+local store = DataStoreService:GetDataStore("DonCayData")
 
---// TẠO REMOTE (nếu chưa có)
-local remote = ReplicatedStorage:FindFirstChild("DonCayRemote")
-if not remote then
-	remote = Instance.new("RemoteEvent")
-	remote.Name = "DonCayRemote"
-	remote.Parent = ReplicatedStorage
-end
+-- Tạo Remote
+local remote = Instance.new("RemoteEvent")
+remote.Name = "DonCayRemote"
+remote.Parent = ReplicatedStorage
 
---// DATASTORE (server side xử lý)
-if game:GetService("RunService"):IsServer() then
-	
-	local store = DataStoreService:GetDataStore("DonCayData")
-
-	remote.OnServerEvent:Connect(function(plr, text)
+-- Lưu dữ liệu
+remote.OnServerEvent:Connect(function(player, text)
+	if typeof(text) == "string" then
 		pcall(function()
-			store:SetAsync(plr.UserId, text)
+			store:SetAsync(player.UserId, text)
 		end)
-	end)
-
-	Players.PlayerAdded:Connect(function(plr)
-		local data
-		pcall(function()
-			data = store:GetAsync(plr.UserId)
-		end)
-		if data then
-			remote:FireClient(plr, data)
-		end
-	end)
-	
-	return
-end
-
---// ===== CLIENT GUI =====
-
-local gui = Instance.new("ScreenGui", player.PlayerGui)
-gui.Name = "DonCayGUI"
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 420, 0, 140)
-frame.Position = UDim2.new(0.35, 0, 0.2, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-frame.Active = true
-frame.Draggable = true -- KÉO THẢ
-
--- Bo góc
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
-
--- Mask tên
-local function maskName(name)
-	return string.sub(name,1,4) .. "****"
-end
-
-local nameLabel = Instance.new("TextLabel", frame)
-nameLabel.Size = UDim2.new(1,0,0.35,0)
-nameLabel.BackgroundTransparency = 1
-nameLabel.TextColor3 = Color3.new(1,1,1)
-nameLabel.TextScaled = true
-nameLabel.Font = Enum.Font.GothamBold
-nameLabel.Text = "Tên : "..maskName(player.Name)
-
--- TextBox
-local textBox = Instance.new("TextBox", frame)
-textBox.Position = UDim2.new(0.05,0,0.45,0)
-textBox.Size = UDim2.new(0.9,0,0.35,0)
-textBox.TextScaled = true
-textBox.PlaceholderText = "GHI ĐƠN CÀY VÀO ĐÂY..."
-textBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-textBox.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", textBox).CornerRadius = UDim.new(0,8)
-
--- Setting Button
-local settingBtn = Instance.new("TextButton", frame)
-settingBtn.Position = UDim2.new(0.8,0,0.02,0)
-settingBtn.Size = UDim2.new(0.18,0,0.25,0)
-settingBtn.Text = "Setting"
-settingBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-settingBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", settingBtn).CornerRadius = UDim.new(0,6)
-
--- Setting Frame
-local settingFrame = Instance.new("Frame", gui)
-settingFrame.Size = UDim2.new(0,200,0,100)
-settingFrame.Position = UDim2.new(0.4,0,0.4,0)
-settingFrame.Visible = false
-settingFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-settingFrame.Active = true
-settingFrame.Draggable = true
-Instance.new("UICorner", settingFrame).CornerRadius = UDim.new(0,10)
-
--- Save Toggle
-local saveToggle = Instance.new("TextButton", settingFrame)
-saveToggle.Size = UDim2.new(1,0,1,0)
-saveToggle.Text = "Save Text : OFF"
-saveToggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
-saveToggle.TextColor3 = Color3.new(1,1,1)
-
-local saved = false
-
-settingBtn.MouseButton1Click:Connect(function()
-	settingFrame.Visible = not settingFrame.Visible
-end)
-
-saveToggle.MouseButton1Click:Connect(function()
-	saved = not saved
-	
-	if saved then
-		saveToggle.Text = "Save Text : ON"
-		textBox.TextEditable = false
-		remote:FireServer(textBox.Text)
-	else
-		saveToggle.Text = "Save Text : OFF"
-		textBox.TextEditable = true
 	end
 end)
 
--- Nhận dữ liệu
-remote.OnClientEvent:Connect(function(data)
+-- Khi player vào game
+Players.PlayerAdded:Connect(function(player)
+
+	-- Tạo GUI
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "DonCayGUI"
+	gui.Parent = player:WaitForChild("PlayerGui")
+
+	local main = Instance.new("Frame", gui)
+	main.Size = UDim2.new(0, 500, 0, 150)
+	main.Position = UDim2.new(0.3, 0, 0.15, 0)
+	main.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	main.Active = true
+	main.Draggable = true
+	Instance.new("UICorner", main).CornerRadius = UDim.new(0,15)
+
+	-- Tabs
+	local tabNote = Instance.new("TextButton", main)
+	tabNote.Size = UDim2.new(0.5,0,0.2,0)
+	tabNote.Text = "Note"
+	tabNote.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	tabNote.TextColor3 = Color3.new(1,1,1)
+
+	local tabSetting = tabNote:Clone()
+	tabSetting.Parent = main
+	tabSetting.Position = UDim2.new(0.5,0,0,0)
+	tabSetting.Text = "Setting"
+
+	-- Pages
+	local notePage = Instance.new("Frame", main)
+	notePage.Size = UDim2.new(1,0,0.8,0)
+	notePage.Position = UDim2.new(0,0,0.2,0)
+	notePage.BackgroundTransparency = 1
+
+	local settingPage = notePage:Clone()
+	settingPage.Parent = main
+	settingPage.Visible = false
+
+	-- Mask tên
+	local function maskName(name)
+		return string.sub(name,1,4).."****"
+	end
+
+	local nameLabel = Instance.new("TextLabel", notePage)
+	nameLabel.Size = UDim2.new(1,0,0.4,0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.TextScaled = true
+	nameLabel.Font = Enum.Font.GothamBold
+	nameLabel.TextColor3 = Color3.new(1,1,1)
+	nameLabel.Text = "👤 Tên : "..maskName(player.Name)
+
+	-- TextBox
+	local textBox = Instance.new("TextBox", notePage)
+	textBox.Position = UDim2.new(0.05,0,0.5,0)
+	textBox.Size = UDim2.new(0.9,0,0.35,0)
+	textBox.TextScaled = true
+	textBox.PlaceholderText = "📌 ĐƠN : GHI ĐƠN CÀY VÀO ĐÂY"
+	textBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	textBox.TextColor3 = Color3.new(1,1,1)
+	Instance.new("UICorner", textBox).CornerRadius = UDim.new(0,8)
+
+	-- Save Toggle
+	local saveLabel = Instance.new("TextLabel", settingPage)
+	saveLabel.Size = UDim2.new(0.6,0,0.5,0)
+	saveLabel.BackgroundTransparency = 1
+	saveLabel.Text = "Save Text"
+	saveLabel.TextScaled = true
+	saveLabel.TextColor3 = Color3.new(1,1,1)
+
+	local toggle = Instance.new("Frame", settingPage)
+	toggle.Position = UDim2.new(0.65,0,0.25,0)
+	toggle.Size = UDim2.new(0,60,0,30)
+	toggle.BackgroundColor3 = Color3.fromRGB(70,70,70)
+	Instance.new("UICorner", toggle).CornerRadius = UDim.new(1,0)
+
+	local circle = Instance.new("Frame", toggle)
+	circle.Size = UDim2.new(0,26,0,26)
+	circle.Position = UDim2.new(0,2,0.5,-13)
+	circle.BackgroundColor3 = Color3.fromRGB(255,120,0)
+	Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
+
+	local saved = false
+
+	toggle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			saved = not saved
+			
+			if saved then
+				circle:TweenPosition(UDim2.new(1,-28,0.5,-13),"Out","Quad",0.2,true)
+				textBox.TextEditable = false
+				remote:FireServer(player, textBox.Text)
+			else
+				circle:TweenPosition(UDim2.new(0,2,0.5,-13),"Out","Quad",0.2,true)
+				textBox.TextEditable = true
+			end
+		end
+	end)
+
+	-- Tab chuyển
+	tabNote.MouseButton1Click:Connect(function()
+		notePage.Visible = true
+		settingPage.Visible = false
+	end)
+
+	tabSetting.MouseButton1Click:Connect(function()
+		notePage.Visible = false
+		settingPage.Visible = true
+	end)
+
+	-- Load Data
+	local data
+	pcall(function()
+		data = store:GetAsync(player.UserId)
+	end)
 	if data then
 		textBox.Text = data
 	end
+
 end)
