@@ -4,12 +4,15 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local store = DataStoreService:GetDataStore("DonCayData")
 
--- Tạo Remote
-local remote = Instance.new("RemoteEvent")
-remote.Name = "DonCayRemote"
-remote.Parent = ReplicatedStorage
+-- Tạo Remote nếu chưa có
+local remote = ReplicatedStorage:FindFirstChild("DonCayRemote")
+if not remote then
+	remote = Instance.new("RemoteEvent")
+	remote.Name = "DonCayRemote"
+	remote.Parent = ReplicatedStorage
+end
 
--- Lưu dữ liệu
+-- Lưu text
 remote.OnServerEvent:Connect(function(player, text)
 	if typeof(text) == "string" then
 		pcall(function()
@@ -18,13 +21,23 @@ remote.OnServerEvent:Connect(function(player, text)
 	end
 end)
 
--- Khi player vào game
+-- Khi player vào
 Players.PlayerAdded:Connect(function(player)
+
+	player.CharacterAdded:Wait() -- đảm bảo player load xong
+
+	local playerGui = player:WaitForChild("PlayerGui")
+
+	-- Xoá GUI cũ nếu có
+	if playerGui:FindFirstChild("DonCayGUI") then
+		playerGui.DonCayGUI:Destroy()
+	end
 
 	-- Tạo GUI
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "DonCayGUI"
-	gui.Parent = player:WaitForChild("PlayerGui")
+	gui.ResetOnSpawn = false
+	gui.Parent = playerGui
 
 	local main = Instance.new("Frame", gui)
 	main.Size = UDim2.new(0, 500, 0, 150)
@@ -79,7 +92,7 @@ Players.PlayerAdded:Connect(function(player)
 	textBox.TextColor3 = Color3.new(1,1,1)
 	Instance.new("UICorner", textBox).CornerRadius = UDim.new(0,8)
 
-	-- Save Toggle
+	-- Toggle Save
 	local saveLabel = Instance.new("TextLabel", settingPage)
 	saveLabel.Size = UDim2.new(0.6,0,0.5,0)
 	saveLabel.BackgroundTransparency = 1
@@ -127,7 +140,7 @@ Players.PlayerAdded:Connect(function(player)
 		settingPage.Visible = true
 	end)
 
-	-- Load Data
+	-- Load dữ liệu
 	local data
 	pcall(function()
 		data = store:GetAsync(player.UserId)
