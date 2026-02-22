@@ -148,7 +148,6 @@ saveLabel.TextColor3 = Color3.new(1,1,1)
 local toggle = Instance.new("Frame", settingPage)
 toggle.Size = UDim2.new(0,60,0,28)
 toggle.Position = UDim2.new(0.95,0,0.25,-14)
-toggle.AnchorPoint = Vector2.new(1, 0.5)
 toggle.BackgroundColor3 = Color3.fromRGB(60,60,60)
 Instance.new("UICorner", toggle).CornerRadius = UDim.new(1,0)
 
