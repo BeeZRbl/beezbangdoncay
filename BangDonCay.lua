@@ -132,7 +132,7 @@ local function sendDiscordWebhook(eventName, content)
         footer = {text = "Beez Notes" .. os.date("%X")},
     }
     local payload = HttpService:JSONEncode({
-        username = "Beez Notes",
+        username = "BeeZ Notes",
         avatar_url = Images["activity"] or "",
         embeds = {embed}
     })
